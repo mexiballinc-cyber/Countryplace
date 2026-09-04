@@ -2,8 +2,15 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getDatabase, ref, set, onChildAdded, onChildChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+// TU CONFIGURACIÓN OFICIAL
 const firebaseConfig = {
-    databaseURL: "https://countryplace-default-rtdb.firebaseio.com/"
+  apiKey: "AIzaSyDsX0ZDsHnNcQ01ubUm5RDh5uQ3A5u9fO4",
+  authDomain: "countryplace.firebaseapp.com",
+  databaseURL: "https://countryplace-default-rtdb.firebaseio.com",
+  projectId: "countryplace",
+  storageBucket: "countryplace.firebasestorage.app",
+  messagingSenderId: "414001729987",
+  appId: "1:414001729987:web:0481bf461b5b57bbce6d76"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -21,10 +28,10 @@ const mapaBloquesRenderizados = {};
 const map = L.map('map', { zoomControl: false, tap: true }).setView([19.4326, -99.1332], 6);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
 
-// OBSERVADOR DE SESIÓN OFICIAL DE FIREBASE AUTH
+// ESCUCHAR SESIÓN EN TIEMPO REAL
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        miUsuario = user;
+        miUsuario = user.email;
         document.getElementById("modal-auth").classList.add("hidden");
         document.getElementById("perfil-email").innerText = user.email;
     } else {
@@ -33,28 +40,15 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// CAMBIAR ENTRE INICIAR SESIÓN Y CREAR CUENTA
+// ALTERNAR ENTRE INICIAR SESIÓN Y REGISTRO
 window.toggleModoAuth = () => {
     esModoRegistro = !esModoRegistro;
-    const title = document.getElementById("auth-title");
-    const btn = document.getElementById("btn-submit");
-    const switchText = document.getElementById("auth-switch-text");
-    const switchBtn = document.getElementById("auth-switch-btn");
-
-    if (esModoRegistro) {
-        title.innerText = "Crear Cuenta";
-        btn.innerText = "Registrarse";
-        switchText.innerText = "¿Ya tienes cuenta?";
-        switchBtn.innerText = "Inicia Sesión";
-    } else {
-        title.innerText = "Iniciar Sesión";
-        btn.innerText = "Entrar";
-        switchText.innerText = "¿No tienes cuenta?";
-        switchBtn.innerText = "Crea una aquí";
-    }
+    document.getElementById("auth-title").innerText = esModoRegistro ? "Crear Cuenta" : "Iniciar Sesión";
+    document.getElementById("btn-submit").innerText = esModoRegistro ? "Registrarse" : "Entrar";
+    document.getElementById("auth-switch-btn").innerText = esModoRegistro ? "Inicia Sesión" : "Crea una aquí";
 };
 
-// EJECUTAR AUTENTICACIÓN (LOGIN O REGISTRO)
+// EJECUTAR REGISTRO O LOGIN
 window.ejecutarAuth = () => {
     const e = document.getElementById("auth-email").value.trim();
     const p = document.getElementById("auth-pass").value.trim();
@@ -62,20 +56,12 @@ window.ejecutarAuth = () => {
     if (!e || !p) return alert("⚠️ Rellena todos los campos.");
 
     if (esModoRegistro) {
-        if (p.length < 6) return alert("⚠️ La contraseña debe tener al menos 6 caracteres.");
-
         createUserWithEmailAndPassword(auth, e, p)
             .then(() => alert("¡Cuenta creada exitosamente! Bienvenido."))
-            .catch(err => {
-                if (err.code === "auth/email-already-in-use") {
-                    alert("⚠️ Este correo ya existe. Cambia a 'Iniciar Sesión'.");
-                } else {
-                    alert("Error al registrar: " + err.message);
-                }
-            });
+            .catch(err => alert("⚠️ Error al registrar: " + err.message));
     } else {
         signInWithEmailAndPassword(auth, e, p)
-            .catch(err => alert("Error al entrar: " + err.message));
+            .catch(err => alert("⚠️ Error al entrar: " + err.message));
     }
 };
 
@@ -85,7 +71,7 @@ window.cerrarSesion = () => {
     });
 };
 
-// PINTAR / CONQUISTAR (CLAVE ÚNICA PARA OPTIMIZAR LA BASE DE DATOS)
+// PINTAR Y CONQUISTAR TERRITORIO
 const BLOCK_SIZE = 0.005;
 
 map.on('click', (e) => {
@@ -108,14 +94,14 @@ map.on('click', (e) => {
                     lng: parseFloat(bLng),
                     country: miPais,
                     color: miColor,
-                    owner: miUsuario.uid
+                    owner: miUsuario
                 });
             }
         }
     }
 });
 
-// ESCUCHAR BLOQUES EN TIEMPO REAL
+// ESCUCHAR CAMBIOS EN EL MAPA
 function procesarBloque(snap) {
     const b = snap.val();
     const idKey = snap.key;
@@ -123,7 +109,7 @@ function procesarBloque(snap) {
 
     if (mapaBloquesRenderizados[idKey]) {
         const previo = mapaBloquesRenderizados[idKey].owner;
-        if (previo === miUsuario?.uid && b.owner !== miUsuario?.uid) {
+        if (previo === miUsuario && b.owner !== miUsuario) {
             dispararGuerra(b.country);
         }
         mapaBloquesRenderizados[idKey].rect.setStyle({ color: b.color, fillColor: b.color });
@@ -139,7 +125,7 @@ function procesarBloque(snap) {
 onChildAdded(ref(db, 'mapa'), procesarBloque);
 onChildChanged(ref(db, 'mapa'), procesarBloque);
 
-// MÉTODOS DE INTERFAZ EXPORTADOS AL SCOPE GLOBAL (WINDOW)
+// FUNCIONES DE INTERFAZ EXPORTADAS A WINDOW
 window.setColor = (c) => miColor = c;
 window.guardarPais = () => {
     miPais = document.getElementById("input-nombre-pais").value || "Nación Libre";
