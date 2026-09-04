@@ -1,16 +1,22 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CountryPlace - Territorios MMO</title>
     
+    <!-- FAVICON CON EMOJI DE LA TIERRA -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌎</text></svg>">
+
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = { darkMode: 'class' }
+    </script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="style.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
-<body class="relative">
+<body class="relative bg-slate-900 text-white transition-colors duration-300">
 
     <!-- HEADER SUPERIOR -->
     <header class="fixed top-3 left-3 right-3 z-[1000] glass-panel rounded-2xl px-4 py-3 flex justify-between items-center">
@@ -19,6 +25,10 @@
         </h1>
 
         <div class="flex items-center gap-2">
+            <!-- BOTÓN MODO CLARO / OSCURO -->
+            <button onclick="toggleTema()" class="glass-panel p-2 rounded-xl flex items-center justify-center hover:bg-slate-800 active:scale-95 transition-transform" title="Cambiar Tema">
+                <span id="theme-icon" class="text-base">☀️</span>
+            </button>
             <button onclick="toggleModal('modal-pais')" class="glass-panel p-2 rounded-xl flex items-center justify-center hover:bg-slate-800 active:scale-95 transition-transform" title="Mi País">
                 <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6h-5.6z"/></svg>
             </button>
@@ -36,8 +46,15 @@
     <!-- MAPA -->
     <div id="map"></div>
 
-    <!-- PALETA DE COLORES INFERIOR -->
-    <footer class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[1000] glass-panel rounded-2xl p-3 flex items-center gap-3 max-w-[92vw]">
+    <!-- PALETA DE COLORES INFERIOR CON BOTÓN DE PINCEL -->
+    <footer class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[1000] glass-panel rounded-2xl p-3 flex items-center gap-3 max-w-[95vw]">
+        <!-- BOTÓN PINCEL / NAVEGAR -->
+        <button id="btn-pincel" onclick="toggleModoPincel()" class="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl flex items-center justify-center active:scale-95 transition-all shrink-0 border border-amber-400/30" title="Activar Modo Pincel">
+            <span class="text-lg">🖌️</span>
+        </button>
+
+        <div class="h-6 w-[1px] bg-white/20 shrink-0"></div>
+
         <span class="text-[10px] font-bold text-slate-400 hidden sm:inline">COLOR:</span>
         <div class="flex items-center gap-2 overflow-x-auto">
             <button onclick="setColor('#ef4444')" class="w-7 h-7 rounded-full bg-red-500 shrink-0 border-2 border-white/40"></button>
@@ -55,7 +72,7 @@
             <h3 class="font-black text-amber-400 text-base border-b border-white/10 pb-2">🏳️ Configuración de País</h3>
             <div class="space-y-1">
                 <label class="text-xs font-bold text-slate-300">Nombre de tu Nación:</label>
-                <input type="text" id="input-nombre-pais" class="w-full p-2.5 bg-slate-900 rounded-xl text-xs outline-none border border-slate-700" value="Nación Libre">
+                <input type="text" id="input-nombre-pais" class="w-full p-2.5 bg-slate-900 rounded-xl text-xs outline-none border border-slate-700 text-white" value="Nación Libre">
             </div>
             <button onclick="guardarPais()" class="w-full bg-amber-500 font-black text-black py-2 rounded-xl text-xs">Guardar</button>
         </div>
@@ -71,26 +88,26 @@
         </div>
     </div>
 
-    <!-- MODAL AUTH CON PLANETA TIERRA AZUL -->
+    <!-- MODAL AUTH -->
     <div id="modal-auth" class="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-cover bg-center" style="background-image: linear-gradient(to bottom, rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.95)), url('https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1000&auto=format&fit=crop');">
         <div class="glass-panel w-full max-w-sm p-6 rounded-2xl space-y-4 text-center border border-white/20 shadow-2xl">
             <div class="text-4xl animate-bounce">🌍</div>
-            <h2 id="auth-title" class="font-black text-amber-400 text-2xl tracking-wide">Iniciar Sesión</h2>
+            <h2 id="auth-title" class="font-black text-amber-400 text-2xl tracking-wide">Crear Cuenta</h2>
             <p class="text-xs text-slate-300">Conquista el mundo píxel a píxel en tiempo real.</p>
 
             <div class="space-y-2 text-left">
                 <input type="email" id="auth-email" placeholder="Correo electrónico" class="w-full p-3 bg-slate-900/90 rounded-xl text-xs outline-none border border-slate-700 focus:border-amber-400 text-white">
-                <input type="password" id="auth-pass" placeholder="Contraseña" class="w-full p-3 bg-slate-900/90 rounded-xl text-xs outline-none border border-slate-700 focus:border-amber-400 text-white">
+                <input type="password" id="auth-pass" placeholder="Contraseña (mínimo 6 caracteres)" class="w-full p-3 bg-slate-900/90 rounded-xl text-xs outline-none border border-slate-700 focus:border-amber-400 text-white">
             </div>
 
             <button id="btn-submit" onclick="ejecutarAuth()" class="w-full bg-amber-500 hover:bg-amber-600 font-black text-black py-3 rounded-xl text-xs active:scale-95 transition-transform shadow-lg">
-                Entrar
+                Registrarse
             </button>
 
             <div class="pt-2 border-t border-white/10 text-xs">
-                <span id="auth-switch-text" class="text-slate-400">¿No tienes cuenta?</span>
+                <span id="auth-switch-text" class="text-slate-400">¿Ya tienes cuenta?</span>
                 <button onclick="toggleModoAuth()" id="auth-switch-btn" class="text-amber-400 font-bold underline ml-1">
-                    Crea una aquí
+                    Inicia Sesión
                 </button>
             </div>
         </div>
