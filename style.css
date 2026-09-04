@@ -3,6 +3,7 @@
     margin: 0;
     padding: 0;
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 body, html {
@@ -10,8 +11,6 @@ body, html {
     height: 100%;
     overflow: hidden;
     font-family: system-ui, -apple-system, sans-serif;
-    background-color: #0f172a;
-    color: #ffffff;
 }
 
 #map {
@@ -21,12 +20,40 @@ body, html {
     cursor: crosshair;
 }
 
-.glass-panel {
-    background: rgba(15, 23, 42, 0.90);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+/* BOTÓN DE PINCEL ACTIVO (EFECTO GLOW AMARILLO) */
+.pincel-activo {
+    background-color: #f59e0b !important;
+    border-color: #ffffff !important;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.8);
+    transform: scale(1.1);
+}
+
+/* PANELS MODO DARK / CLARO */
+.dark .glass-panel {
+    background: rgba(15, 23, 42, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+html:not(.dark) .glass-panel {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+    color: #1e293b;
+}
+
+html:not(.dark) .glass-panel h1,
+html:not(.dark) .glass-panel h2,
+html:not(.dark) .glass-panel h3 {
+    color: #d97706;
+}
+
+html:not(.dark) .glass-panel svg {
+    fill: #1e293b;
 }
 
 @keyframes alertPulse {
