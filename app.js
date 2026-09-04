@@ -21,7 +21,7 @@ let esModoRegistro = true;
 let modoPincel = false;
 let modoBorrador = false;
 let presionando = false;
-let navegandoConScroll = false;
+let moviendoConClicDerecho = false;
 let ultimoClickBoton = 0;
 let grosorPincel = 4;
 let miUsuario = null;
@@ -66,7 +66,7 @@ function toggleModoPincel() {
     }
 }
 
-// INICIALIZACIÓN DE EVENTOS
+// INICIALIZACIÓN DE EVENTOS DENTRO DE LA UI
 document.addEventListener("DOMContentLoaded", () => {
     const inputPais = document.getElementById("input-nombre-pais");
     if (inputPais) inputPais.value = miPais;
@@ -76,8 +76,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const picker = document.getElementById("puntero-color");
-    picker.addEventListener("input", (e) => setColor(e.target.value));
-    picker.addEventListener("click", (e) => setColor(e.target.value));
+    if (picker) {
+        picker.addEventListener("input", (e) => setColor(e.target.value));
+        picker.addEventListener("change", (e) => setColor(e.target.value));
+    }
 
     document.getElementById("btn-borrador").addEventListener("click", activarBorrador);
     
@@ -119,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
             icon.innerHTML = `<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>`;
         } else {
             html.classList.add("dark");
-            icon.innerHTML = `<path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39.39 1.03 0 1.41s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41s-1.02-.39-1.41 0z"/>`;
+            icon.innerHTML = `<path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39.39 1.03 0 1.41s1.03-.39 1.41-0l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41s-1.02-.39-1.41 0z"/>`;
         }
     });
 
@@ -177,7 +179,7 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// PROCESO DE DIBUJO Y BLOQUES
+// PROCESO DE DIBUJO Y BORRADO DE BLOQUES
 const BLOCK_SIZE = 0.005;
 
 function procesarAccionEnCoordenada(latlng) {
@@ -185,7 +187,7 @@ function procesarAccionEnCoordenada(latlng) {
 
     const centerLat = Math.floor(latlng.lat / BLOCK_SIZE) * BLOCK_SIZE;
     const centerLng = Math.floor(latlng.lng / BLOCK_SIZE) * BLOCK_SIZE;
-    const RADIUS = grosorPincel;
+    const RADIUS = grosorPincel - 1;
 
     for (let dx = -RADIUS; dx <= RADIUS; dx++) {
         for (let dy = -RADIUS; dy <= RADIUS; dy++) {
@@ -195,9 +197,8 @@ function procesarAccionEnCoordenada(latlng) {
             const blockId = `${bLat}_${bLng}`.replace(/\./g, '_').replace(/-/g, 'm');
 
             if (modoBorrador) {
-                if (mapaBloquesRenderizados[blockId] && mapaBloquesRenderizados[blockId].owner === miUsuario) {
-                    remove(ref(db, `mapa/${blockId}`));
-                }
+                // Borra cualquier bloque existente en las coordenadas
+                remove(ref(db, `mapa/${blockId}`));
             } else {
                 set(ref(db, `mapa/${blockId}`), {
                     lat: parseFloat(bLat),
@@ -211,47 +212,65 @@ function procesarAccionEnCoordenada(latlng) {
     }
 }
 
-// ARRASTRE TÁCTIL SIN BUGS EN MÓVILES
+// CONTROLADORES DE EVENTOS DE MOUSE Y TOUCH SEPARADOS
 const mapElement = document.getElementById('map');
 
+// 1. CONTROLADOR PARA PC: CLIC DERECHO PARA MOVER EL MAPA
+mapElement.addEventListener('contextmenu', (e) => e.preventDefault()); // Desactiva el menú contextual predeterminado
+
 mapElement.addEventListener('mousedown', (e) => {
-    if (e.button === 1) {
-        e.preventDefault();
-        navegandoConScroll = true;
+    if (e.button === 2) { // Clic derecho
+        moviendoConClicDerecho = true;
         map.dragging.enable();
         mapElement.style.cursor = 'grabbing';
     }
 });
 
-mapElement.addEventListener('mouseup', (e) => {
-    if (e.button === 1) {
-        navegandoConScroll = false;
+window.addEventListener('mouseup', (e) => {
+    if (e.button === 2 && moviendoConClicDerecho) {
+        moviendoConClicDerecho = false;
         mapElement.style.cursor = 'crosshair';
         if (modoPincel) map.dragging.disable();
     }
 });
 
-// CORRECCIÓN TÁCTIL EN PANTALLAS MÓVILES
-map.on('mousedown touchstart', (e) => {
-    if (!modoPincel || navegandoConScroll) return;
-    if (e.originalEvent && e.originalEvent.touches) {
-        e.originalEvent.preventDefault();
+// 2. LÓGICA DE DIBUJO EN PC / MÓVIL
+map.on('mousedown', (e) => {
+    if (!modoPincel || moviendoConClicDerecho) return;
+    if (e.originalEvent.button === 0) { // Clic izquierdo
+        presionando = true;
+        procesarAccionEnCoordenada(e.latlng);
     }
+});
+
+map.on('mousemove', (e) => {
+    if (!modoPincel || !presionando || moviendoConClicDerecho) return;
+    procesarAccionEnCoordenada(e.latlng);
+});
+
+map.on('mouseup', () => { presionando = false; });
+
+// 3. LÓGICA DE DIBUJO EXCLUSIVA PARA MÓVIL (TOUCH)
+mapElement.addEventListener('touchstart', (e) => {
+    if (!modoPincel) return;
+    e.preventDefault();
     presionando = true;
-    procesarAccionEnCoordenada(e.latlng);
-});
+    const touch = e.touches[0];
+    const latlng = map.containerPointToLatLng([touch.clientX, touch.clientY]);
+    procesarAccionEnCoordenada(latlng);
+}, { passive: false });
 
-map.on('mousemove touchmove', (e) => {
-    if (!modoPincel || !presionando || navegandoConScroll) return;
-    if (e.originalEvent && e.originalEvent.touches) {
-        e.originalEvent.preventDefault();
-    }
-    procesarAccionEnCoordenada(e.latlng);
-});
+mapElement.addEventListener('touchmove', (e) => {
+    if (!modoPincel || !presionando) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const latlng = map.containerPointToLatLng([touch.clientX, touch.clientY]);
+    procesarAccionEnCoordenada(latlng);
+}, { passive: false });
 
-map.on('mouseup touchend', () => { presionando = false; });
+mapElement.addEventListener('touchend', () => { presionando = false; });
 
-// TIEMPO REAL
+// TIEMPO REAL CON FIREBASE
 function procesarBloque(snap) {
     const b = snap.val();
     if (!b) return;
