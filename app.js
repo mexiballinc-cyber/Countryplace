@@ -83,7 +83,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("btn-borrador").addEventListener("click", activarBorrador);
     
-    document.getElementById("btn-pincel").addEventListener("click", () => {
+    // ACCIÓN DEL BOTÓN PINCEL MEJORADA PARA PC Y MÓVIL
+    const btnPincel = document.getElementById("btn-pincel");
+    const manejarClickPincel = (e) => {
+        e.stopPropagation();
         const ahora = Date.now();
         if (ahora - ultimoClickBoton < 300) {
             toggleModal('modal-grosor');
@@ -91,7 +94,9 @@ document.addEventListener("DOMContentLoaded", () => {
             toggleModoPincel();
         }
         ultimoClickBoton = ahora;
-    });
+    };
+
+    btnPincel.addEventListener("click", manejarClickPincel);
 
     document.getElementById("input-grosor").addEventListener("input", (e) => {
         grosorPincel = parseInt(e.target.value);
@@ -197,7 +202,6 @@ function procesarAccionEnCoordenada(latlng) {
             const blockId = `${bLat}_${bLng}`.replace(/\./g, '_').replace(/-/g, 'm');
 
             if (modoBorrador) {
-                // Borra cualquier bloque existente en las coordenadas
                 remove(ref(db, `mapa/${blockId}`));
             } else {
                 set(ref(db, `mapa/${blockId}`), {
@@ -212,14 +216,13 @@ function procesarAccionEnCoordenada(latlng) {
     }
 }
 
-// CONTROLADORES DE EVENTOS DE MOUSE Y TOUCH SEPARADOS
+// CONTROLADORES DE EVENTOS
 const mapElement = document.getElementById('map');
 
-// 1. CONTROLADOR PARA PC: CLIC DERECHO PARA MOVER EL MAPA
-mapElement.addEventListener('contextmenu', (e) => e.preventDefault()); // Desactiva el menú contextual predeterminado
+mapElement.addEventListener('contextmenu', (e) => e.preventDefault());
 
 mapElement.addEventListener('mousedown', (e) => {
-    if (e.button === 2) { // Clic derecho
+    if (e.button === 2) {
         moviendoConClicDerecho = true;
         map.dragging.enable();
         mapElement.style.cursor = 'grabbing';
@@ -234,10 +237,10 @@ window.addEventListener('mouseup', (e) => {
     }
 });
 
-// 2. LÓGICA DE DIBUJO EN PC / MÓVIL
+// DIBUJO EN PC
 map.on('mousedown', (e) => {
     if (!modoPincel || moviendoConClicDerecho) return;
-    if (e.originalEvent.button === 0) { // Clic izquierdo
+    if (e.originalEvent.button === 0) {
         presionando = true;
         procesarAccionEnCoordenada(e.latlng);
     }
@@ -250,9 +253,10 @@ map.on('mousemove', (e) => {
 
 map.on('mouseup', () => { presionando = false; });
 
-// 3. LÓGICA DE DIBUJO EXCLUSIVA PARA MÓVIL (TOUCH)
+// DIBUJO EN MÓVIL
 mapElement.addEventListener('touchstart', (e) => {
     if (!modoPincel) return;
+    if (e.target.closest('footer') || e.target.closest('header') || e.target.closest('.glass-panel')) return;
     e.preventDefault();
     presionando = true;
     const touch = e.touches[0];
@@ -262,6 +266,7 @@ mapElement.addEventListener('touchstart', (e) => {
 
 mapElement.addEventListener('touchmove', (e) => {
     if (!modoPincel || !presionando) return;
+    if (e.target.closest('footer') || e.target.closest('header') || e.target.closest('.glass-panel')) return;
     e.preventDefault();
     const touch = e.touches[0];
     const latlng = map.containerPointToLatLng([touch.clientX, touch.clientY]);
