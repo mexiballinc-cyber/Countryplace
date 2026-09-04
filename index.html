@@ -38,7 +38,7 @@
     <!-- MAPA -->
     <div id="map"></div>
 
-    <!-- PALETA DE COLORES INFERIOR (MODO PINTOR) -->
+    <!-- PALETA DE COLORES INFERIOR -->
     <footer class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[1000] glass-panel rounded-2xl p-3 flex items-center gap-3 max-w-[92vw]">
         <span class="text-[10px] font-bold text-slate-400 hidden sm:inline">COLOR:</span>
         <div class="flex items-center gap-2 overflow-x-auto">
@@ -73,20 +73,21 @@
         </div>
     </div>
 
-    <!-- MODAL BLOQUEO AUTH (Si no hay sesión) -->
-    <div id="modal-auth" class="fixed inset-0 z-[3000] bg-slate-950/90 backdrop-blur-lg flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-sm p-6 rounded-2xl space-y-4">
-            <h2 class="font-black text-amber-400 text-xl text-center">🌍 CountryPlace</h2>
-            <p class="text-xs text-slate-400 text-center">Inicia sesión para conquistar el mapa mundial.</p>
+    <!-- MODAL BLOQUEO AUTH (CON FONDO PLANETA TIERRA) -->
+    <div id="modal-auth" class="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-cover bg-center" style="background-image: linear-gradient(to bottom, rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.95)), url('https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?q=80&w=1000&auto=format&fit=crop');">
+        <div class="glass-panel w-full max-w-sm p-6 rounded-2xl space-y-4 text-center border border-white/20 shadow-2xl">
+            <div class="text-4xl animate-bounce">🌍</div>
+            <h2 class="font-black text-amber-400 text-2xl tracking-wide">CountryPlace</h2>
+            <p class="text-xs text-slate-300">Conquista el mundo píxel a píxel en tiempo real.</p>
 
-            <div class="space-y-2">
-                <input type="email" id="auth-email" placeholder="Correo electrónico" class="w-full p-2.5 bg-slate-900 rounded-xl text-xs outline-none border border-slate-700">
-                <input type="password" id="auth-pass" placeholder="Contraseña" class="w-full p-2.5 bg-slate-900 rounded-xl text-xs outline-none border border-slate-700">
+            <div class="space-y-2 text-left">
+                <input type="email" id="auth-email" placeholder="Correo electrónico" class="w-full p-3 bg-slate-900/90 rounded-xl text-xs outline-none border border-slate-700 focus:border-amber-400">
+                <input type="password" id="auth-pass" placeholder="Contraseña (mínimo 6 caracteres)" class="w-full p-3 bg-slate-900/90 rounded-xl text-xs outline-none border border-slate-700 focus:border-amber-400">
             </div>
 
             <div class="flex gap-2 pt-2">
-                <button onclick="login()" class="w-1/2 bg-amber-500 font-black text-black py-2.5 rounded-xl text-xs">Entrar</button>
-                <button onclick="register()" class="w-1/2 bg-slate-800 font-bold text-white py-2.5 rounded-xl text-xs">Registrar</button>
+                <button onclick="login()" class="w-1/2 bg-amber-500 hover:bg-amber-600 font-black text-black py-2.5 rounded-xl text-xs active:scale-95 transition-transform">Entrar</button>
+                <button onclick="register()" class="w-1/2 bg-slate-800 hover:bg-slate-700 font-bold text-white py-2.5 rounded-xl text-xs active:scale-95 transition-transform border border-white/10">Registrar</button>
             </div>
         </div>
     </div>
