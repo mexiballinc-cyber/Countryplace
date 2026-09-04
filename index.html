@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CountryPlace - Territorios MMO</title>
     
-    <!-- FAVICON CON EMOJI DE LA TIERRA -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌎</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z'/></svg>">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -21,36 +20,37 @@
     <!-- HEADER SUPERIOR -->
     <header class="fixed top-3 left-3 right-3 z-[1000] glass-panel rounded-2xl px-4 py-3 flex justify-between items-center">
         <h1 class="font-black text-amber-400 text-base md:text-lg tracking-wider flex items-center gap-2">
-            🌍 CountryPlace
+            <svg class="w-6 h-6 fill-amber-400" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            CountryPlace
         </h1>
 
         <div class="flex items-center gap-2">
-            <!-- BOTÓN MODO CLARO / OSCURO -->
             <button onclick="toggleTema()" class="glass-panel p-2 rounded-xl flex items-center justify-center hover:bg-slate-800 active:scale-95 transition-transform" title="Cambiar Tema">
-                <span id="theme-icon" class="text-base">☀️</span>
+                <svg id="theme-icon" class="w-5 h-5 fill-amber-400" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41s-1.02-.39-1.41 0z"/></svg>
             </button>
             <button onclick="toggleModal('modal-pais')" class="glass-panel p-2 rounded-xl flex items-center justify-center hover:bg-slate-800 active:scale-95 transition-transform" title="Mi País">
                 <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6h-5.6z"/></svg>
             </button>
             <button onclick="toggleModal('modal-perfil')" class="glass-panel p-2 rounded-xl flex items-center justify-center hover:bg-slate-800 active:scale-95 transition-transform" title="Perfil">
-                <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
             </button>
         </div>
     </header>
 
     <!-- NOTIFICACIÓN DE GUERRA -->
     <div id="war-banner" class="hidden fixed top-20 left-1/2 -translate-x-1/2 z-[1000] bg-rose-600 text-white font-black text-xs md:text-sm px-6 py-2.5 rounded-full shadow-2xl war-alert flex items-center gap-2">
-        <span>⚠️</span> <span id="war-text">¡INVASIÓN EN PROGRESO!</span>
+        <svg class="w-5 h-5 fill-white shrink-0" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+        <span id="war-text">¡INVASIÓN EN PROGRESO!</span>
     </div>
 
     <!-- MAPA -->
     <div id="map"></div>
 
-    <!-- PALETA DE COLORES INFERIOR CON BOTÓN DE PINCEL -->
+    <!-- PALETA DE COLORES INFERIOR -->
     <footer class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[1000] glass-panel rounded-2xl p-3 flex items-center gap-3 max-w-[95vw]">
-        <!-- BOTÓN PINCEL / NAVEGAR -->
-        <button id="btn-pincel" onclick="toggleModoPincel()" class="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl flex items-center justify-center active:scale-95 transition-all shrink-0 border border-amber-400/30" title="Activar Modo Pincel">
-            <span class="text-lg">🖌️</span>
+        <!-- BOTÓN PINCEL SVG -->
+        <button id="btn-pincel" onclick="clickBotonPincel()" class="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl flex items-center justify-center active:scale-95 transition-all shrink-0 border border-amber-400/30 relative" title="Activar Modo Pincel (Doble clic para opciones)">
+            <svg class="w-5 h-5 fill-amber-400" viewBox="0 0 24 24"><path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34a.996.996 0 0 0-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z"/></svg>
         </button>
 
         <div class="h-6 w-[1px] bg-white/20 shrink-0"></div>
@@ -62,9 +62,33 @@
             <button onclick="setColor('#10b981')" class="w-7 h-7 rounded-full bg-emerald-500 shrink-0 border-2 border-white/40"></button>
             <button onclick="setColor('#f59e0b')" class="w-7 h-7 rounded-full bg-amber-500 shrink-0 border-2 border-white/40"></button>
             <button onclick="setColor('#8b5cf6')" class="w-7 h-7 rounded-full bg-purple-500 shrink-0 border-2 border-white/40"></button>
-            <input type="color" id="puntero-color" value="#3b82f6" onchange="setColor(this.value)" class="w-8 h-8 rounded-full bg-transparent cursor-pointer shrink-0 border-0">
+            
+            <!-- INPUT PERSONALIZADO (SE SELECCIONA AL INSTANTE AL CAMBIAR O CLIQUEAR) -->
+            <input type="color" id="puntero-color" value="#ffffff" oninput="setColor(this.value)" onclick="setColor(this.value)" class="w-8 h-8 rounded-full bg-transparent cursor-pointer shrink-0 border-0">
+            
+            <div class="h-6 w-[1px] bg-white/20 shrink-0 mx-1"></div>
+
+            <!-- BOTÓN BORRADOR SVG -->
+            <button id="btn-borrador" onclick="activarBorrador()" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl flex items-center justify-center active:scale-95 transition-all shrink-0 border border-slate-600" title="Modo Borrador (Solo borra tus bloques)">
+                <svg class="w-5 h-5 fill-slate-300" viewBox="0 0 24 24"><path d="M16.24 3.56l4.95 4.94c.78.79.78 2.05 0 2.84L12 20.53a4.008 4.008 0 0 1-5.66 0L2.81 17c-.78-.79-.78-2.05 0-2.84l9.19-9.19c.79-.78 2.05-.78 2.84 0zM5.64 15.58l3.54 3.54c.78.78 2.05.78 2.83 0l6.36-6.36-4.95-4.95-7.78 7.77z"/></svg>
+            </button>
         </div>
     </footer>
+
+    <!-- MODAL AJUSTAR GROSOR DEL PINCEL -->
+    <div id="modal-grosor" class="hidden fixed inset-0 z-[2000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-xs p-5 rounded-2xl space-y-4 text-center">
+            <h3 class="font-black text-amber-400 text-base border-b border-white/10 pb-2 flex items-center justify-center gap-2">
+                <svg class="w-5 h-5 fill-amber-400" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                Grosor del Pincel
+            </h3>
+            <div class="space-y-2">
+                <input type="range" id="input-grosor" min="1" max="8" value="4" oninput="cambiarGrosor(this.value)" class="w-full accent-amber-500 cursor-pointer">
+                <p class="text-xs font-bold text-slate-300">Tamaño actual: <span id="val-grosor" class="text-amber-400 font-black">4x4</span></p>
+            </div>
+            <button onclick="toggleModal('modal-grosor')" class="w-full bg-amber-500 font-black text-black py-2 rounded-xl text-xs">Aceptar</button>
+        </div>
+    </div>
 
     <!-- MODAL PAÍS -->
     <div id="modal-pais" class="hidden fixed inset-0 z-[2000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
@@ -91,7 +115,9 @@
     <!-- MODAL AUTH -->
     <div id="modal-auth" class="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-cover bg-center" style="background-image: linear-gradient(to bottom, rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.95)), url('https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1000&auto=format&fit=crop');">
         <div class="glass-panel w-full max-w-sm p-6 rounded-2xl space-y-4 text-center border border-white/20 shadow-2xl">
-            <div class="text-4xl animate-bounce">🌍</div>
+            <div class="flex justify-center">
+                <svg class="w-12 h-12 fill-amber-400 animate-bounce" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            </div>
             <h2 id="auth-title" class="font-black text-amber-400 text-2xl tracking-wide">Crear Cuenta</h2>
             <p class="text-xs text-slate-300">Conquista el mundo píxel a píxel en tiempo real.</p>
 
