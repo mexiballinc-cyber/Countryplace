@@ -29,16 +29,129 @@ let miColor = "#ef4444";
 let miPais = localStorage.getItem("countryplace_mipais") || "Nación Libre";
 const mapaBloquesRenderizados = {};
 
+const toggleModal = (id) => document.getElementById(id).classList.toggle("hidden");
+
+function setColor(c) {
+    miColor = c;
+    if (modoBorrador) activarBorrador();
+    const wrapper = document.querySelector(".custom-color-wrapper");
+    if (wrapper) wrapper.style.backgroundColor = c;
+}
+
+function activarBorrador() {
+    modoBorrador = !modoBorrador;
+    const btnBorrar = document.getElementById("btn-borrador");
+    if (modoBorrador) {
+        btnBorrar.classList.add("borrador-activo");
+    } else {
+        btnBorrar.classList.remove("borrador-activo");
+    }
+}
+
+function toggleModoPincel() {
+    modoPincel = !modoPincel;
+    const btn = document.getElementById("btn-pincel");
+    if (modoPincel) {
+        map.dragging.disable();
+        map.touchZoom.disable();
+        map.doubleClickZoom.disable();
+        map.scrollWheelZoom.disable();
+        btn.classList.add("pincel-activo");
+    } else {
+        map.dragging.enable();
+        map.touchZoom.enable();
+        map.doubleClickZoom.enable();
+        map.scrollWheelZoom.enable();
+        btn.classList.remove("pincel-activo");
+    }
+}
+
+// INICIALIZACIÓN DE EVENTOS
 document.addEventListener("DOMContentLoaded", () => {
     const inputPais = document.getElementById("input-nombre-pais");
     if (inputPais) inputPais.value = miPais;
+
+    document.querySelectorAll(".btn-color").forEach(btn => {
+        btn.addEventListener("click", () => setColor(btn.dataset.color));
+    });
+
+    const picker = document.getElementById("puntero-color");
+    picker.addEventListener("input", (e) => setColor(e.target.value));
+    picker.addEventListener("click", (e) => setColor(e.target.value));
+
+    document.getElementById("btn-borrador").addEventListener("click", activarBorrador);
+    
+    document.getElementById("btn-pincel").addEventListener("click", () => {
+        const ahora = Date.now();
+        if (ahora - ultimoClickBoton < 300) {
+            toggleModal('modal-grosor');
+        } else {
+            toggleModoPincel();
+        }
+        ultimoClickBoton = ahora;
+    });
+
+    document.getElementById("input-grosor").addEventListener("input", (e) => {
+        grosorPincel = parseInt(e.target.value);
+        document.getElementById("val-grosor").innerText = `${grosorPincel}x${grosorPincel}`;
+    });
+
+    document.getElementById("btn-cerrar-grosor").addEventListener("click", () => toggleModal('modal-grosor'));
+    document.getElementById("btn-modal-pais").addEventListener("click", () => toggleModal('modal-pais'));
+    document.getElementById("btn-guardar-pais").addEventListener("click", () => {
+        const val = document.getElementById("input-nombre-pais").value.trim();
+        miPais = val || "Nación Libre";
+        localStorage.setItem("countryplace_mipais", miPais);
+        toggleModal('modal-pais');
+    });
+
+    document.getElementById("btn-modal-perfil").addEventListener("click", () => toggleModal('modal-perfil'));
+    document.getElementById("btn-cerrar-perfil").addEventListener("click", () => toggleModal('modal-perfil'));
+    document.getElementById("btn-cerrar-sesion").addEventListener("click", () => {
+        signOut(auth).then(() => toggleModal('modal-perfil'));
+    });
+
+    document.getElementById("btn-tema").addEventListener("click", () => {
+        const html = document.documentElement;
+        const icon = document.getElementById("theme-icon");
+        if (html.classList.contains("dark")) {
+            html.classList.remove("dark");
+            icon.innerHTML = `<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>`;
+        } else {
+            html.classList.add("dark");
+            icon.innerHTML = `<path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39.39 1.03 0 1.41s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41s-1.02-.39-1.41 0z"/>`;
+        }
+    });
+
+    document.getElementById("auth-switch-btn").addEventListener("click", () => {
+        esModoRegistro = !esModoRegistro;
+        document.getElementById("auth-title").innerText = esModoRegistro ? "Crear Cuenta" : "Iniciar Sesión";
+        document.getElementById("btn-submit").innerText = esModoRegistro ? "Registrarse" : "Entrar";
+        document.getElementById("auth-switch-text").innerText = esModoRegistro ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?";
+        document.getElementById("auth-switch-btn").innerText = esModoRegistro ? "Inicia Sesión" : "Crea una aquí";
+    });
+
+    document.getElementById("btn-submit").addEventListener("click", () => {
+        const e = document.getElementById("auth-email").value.trim();
+        const p = document.getElementById("auth-pass").value.trim();
+        if (!e || !p) return alert("⚠️ Rellena todos los campos.");
+
+        if (esModoRegistro) {
+            createUserWithEmailAndPassword(auth, e, p)
+                .then(() => alert("¡Cuenta creada exitosamente!"))
+                .catch(err => alert("⚠️ Error al registrar: " + err.message));
+        } else {
+            signInWithEmailAndPassword(auth, e, p)
+                .catch(err => alert("⚠️ Error al entrar: " + err.message));
+        }
+    });
 });
 
-// OPTIMIZACIÓN DE MAPA RÁPIDO
+// CONFIGURACIÓN DEL MAPA
 const canvasRenderer = L.canvas({ padding: 0.1 });
 const map = L.map('map', { 
     zoomControl: false, 
-    tap: true,
+    tap: false,
     preferCanvas: true,
     fadeAnimation: false,
     zoomAnimation: false,
@@ -64,89 +177,7 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-window.toggleModoAuth = () => {
-    esModoRegistro = !esModoRegistro;
-    document.getElementById("auth-title").innerText = esModoRegistro ? "Crear Cuenta" : "Iniciar Sesión";
-    document.getElementById("btn-submit").innerText = esModoRegistro ? "Registrarse" : "Entrar";
-    document.getElementById("auth-switch-text").innerText = esModoRegistro ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?";
-    document.getElementById("auth-switch-btn").innerText = esModoRegistro ? "Inicia Sesión" : "Crea una aquí";
-};
-
-window.ejecutarAuth = () => {
-    const e = document.getElementById("auth-email").value.trim();
-    const p = document.getElementById("auth-pass").value.trim();
-
-    if (!e || !p) return alert("⚠️ Rellena todos los campos.");
-
-    if (esModoRegistro) {
-        createUserWithEmailAndPassword(auth, e, p)
-            .then(() => alert("¡Cuenta creada exitosamente! Bienvenido."))
-            .catch(err => alert("⚠️ Error al registrar: " + err.message));
-    } else {
-        signInWithEmailAndPassword(auth, e, p)
-            .catch(err => alert("⚠️ Error al entrar: " + err.message));
-    }
-};
-
-window.cerrarSesion = () => {
-    signOut(auth).then(() => {
-        window.toggleModal('modal-perfil');
-    });
-};
-
-// SELECCIONAR COLOR AL INSTANTE
-window.setColor = (c) => {
-    miColor = c;
-    if (modoBorrador) activarBorrador(); // Desactiva borrador al tocar cualquier color
-};
-
-// BORRADOR Y PINCEL
-window.activarBorrador = () => {
-    modoBorrador = !modoBorrador;
-    const btnBorrar = document.getElementById("btn-borrador");
-
-    if (modoBorrador) {
-        btnBorrar.classList.add("borrador-activo");
-    } else {
-        btnBorrar.classList.remove("borrador-activo");
-    }
-};
-
-window.clickBotonPincel = () => {
-    const ahora = Date.now();
-    if (ahora - ultimoClickBoton < 300) {
-        window.toggleModal('modal-grosor');
-    } else {
-        window.toggleModoPincel();
-    }
-    ultimoClickBoton = ahora;
-};
-
-window.toggleModoPincel = () => {
-    modoPincel = !modoPincel;
-    const btn = document.getElementById("btn-pincel");
-
-    if (modoPincel) {
-        map.dragging.disable();
-        map.touchZoom.disable();
-        map.doubleClickZoom.disable();
-        map.scrollWheelZoom.disable();
-        btn.classList.add("pincel-activo");
-    } else {
-        map.dragging.enable();
-        map.touchZoom.enable();
-        map.doubleClickZoom.enable();
-        map.scrollWheelZoom.enable();
-        btn.classList.remove("pincel-activo");
-    }
-};
-
-window.cambiarGrosor = (v) => {
-    grosorPincel = parseInt(v);
-    document.getElementById("val-grosor").innerText = `${grosorPincel}x${grosorPincel}`;
-};
-
-// DIBUJAR O BORRAR SOLO SUS BLOQUES
+// PROCESO DE DIBUJO Y BLOQUES
 const BLOCK_SIZE = 0.005;
 
 function procesarAccionEnCoordenada(latlng) {
@@ -180,7 +211,7 @@ function procesarAccionEnCoordenada(latlng) {
     }
 }
 
-// NAVEGACIÓN CON SCROLL CLICK
+// ARRASTRE TÁCTIL SIN BUGS EN MÓVILES
 const mapElement = document.getElementById('map');
 
 mapElement.addEventListener('mousedown', (e) => {
@@ -196,29 +227,31 @@ mapElement.addEventListener('mouseup', (e) => {
     if (e.button === 1) {
         navegandoConScroll = false;
         mapElement.style.cursor = 'crosshair';
-        if (modoPincel) {
-            map.dragging.disable();
-        }
+        if (modoPincel) map.dragging.disable();
     }
 });
 
-// EVENTOS DE DIBUJO AL ARRASTRAR
+// CORRECCIÓN TÁCTIL EN PANTALLAS MÓVILES
 map.on('mousedown touchstart', (e) => {
     if (!modoPincel || navegandoConScroll) return;
+    if (e.originalEvent && e.originalEvent.touches) {
+        e.originalEvent.preventDefault();
+    }
     presionando = true;
     procesarAccionEnCoordenada(e.latlng);
 });
 
 map.on('mousemove touchmove', (e) => {
     if (!modoPincel || !presionando || navegandoConScroll) return;
+    if (e.originalEvent && e.originalEvent.touches) {
+        e.originalEvent.preventDefault();
+    }
     procesarAccionEnCoordenada(e.latlng);
 });
 
-map.on('mouseup touchend', () => {
-    presionando = false;
-});
+map.on('mouseup touchend', () => { presionando = false; });
 
-// ESCUCHAR MAPA EN TIEMPO REAL
+// TIEMPO REAL
 function procesarBloque(snap) {
     const b = snap.val();
     if (!b) return;
@@ -255,28 +288,6 @@ onChildRemoved(ref(db, 'mapa'), (snap) => {
         delete mapaBloquesRenderizados[idKey];
     }
 });
-
-// TEMA CLARO Y OSCURO DINÁMICO
-window.toggleTema = () => {
-    const html = document.documentElement;
-    const icon = document.getElementById("theme-icon");
-    
-    if (html.classList.contains("dark")) {
-        html.classList.remove("dark");
-        icon.innerHTML = `<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>`;
-    } else {
-        html.classList.add("dark");
-        icon.innerHTML = `<path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41s-1.02-.39-1.41 0z"/>`;
-    }
-};
-
-window.guardarPais = () => {
-    const valor = document.getElementById("input-nombre-pais").value.trim();
-    miPais = valor || "Nación Libre";
-    localStorage.setItem("countryplace_mipais", miPais);
-    window.toggleModal('modal-pais');
-};
-window.toggleModal = (id) => document.getElementById(id).classList.toggle("hidden");
 
 function dispararGuerra(enemigo) {
     const banner = document.getElementById("war-banner");
