@@ -2,7 +2,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getDatabase, ref, set, onChildAdded, onChildChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// TU CONFIGURACIÓN OFICIAL
 const firebaseConfig = {
   apiKey: "AIzaSyDsX0ZDsHnNcQ01ubUm5RDh5uQ3A5u9fO4",
   authDomain: "countryplace.firebaseapp.com",
@@ -17,18 +16,34 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-// ESTADO GLOBAL
-let esModoRegistro = false;
+// REGISTRO POR DEFECTO PARA NUEVOS USUARIOS
+let esModoRegistro = true;
 let miUsuario = null;
 let miColor = "#3b82f6";
-let miPais = "Nación Libre";
+let miPais = localStorage.getItem("countryplace_mipais") || "Nación Libre";
 const mapaBloquesRenderizados = {};
 
-// MAPA LEAFLET
-const map = L.map('map', { zoomControl: false, tap: true }).setView([19.4326, -99.1332], 6);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+document.addEventListener("DOMContentLoaded", () => {
+    const inputPais = document.getElementById("input-nombre-pais");
+    if (inputPais) inputPais.value = miPais;
+});
 
-// ESCUCHAR SESIÓN EN TIEMPO REAL
+// MAPA OPTIMIZADO PARA MÓVILES (RENDERIZADO POR CANVAS)
+const canvasRenderer = L.canvas({ padding: 0.5 });
+const map = L.map('map', { 
+    zoomControl: false, 
+    tap: true,
+    preferCanvas: true,
+    bounceAtZoomLimits: false
+}).setView([19.4326, -99.1332], 6);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+    maxZoom: 18,
+    updateWhenIdle: true,
+    updateWhenZooming: false
+}).addTo(map);
+
+// OBSERVADOR DE SESIÓN SILENCIOSO
 onAuthStateChanged(auth, (user) => {
     if (user) {
         miUsuario = user.email;
@@ -40,15 +55,14 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// ALTERNAR ENTRE INICIAR SESIÓN Y REGISTRO
 window.toggleModoAuth = () => {
     esModoRegistro = !esModoRegistro;
     document.getElementById("auth-title").innerText = esModoRegistro ? "Crear Cuenta" : "Iniciar Sesión";
     document.getElementById("btn-submit").innerText = esModoRegistro ? "Registrarse" : "Entrar";
+    document.getElementById("auth-switch-text").innerText = esModoRegistro ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?";
     document.getElementById("auth-switch-btn").innerText = esModoRegistro ? "Inicia Sesión" : "Crea una aquí";
 };
 
-// EJECUTAR REGISTRO O LOGIN
 window.ejecutarAuth = () => {
     const e = document.getElementById("auth-email").value.trim();
     const p = document.getElementById("auth-pass").value.trim();
@@ -71,7 +85,7 @@ window.cerrarSesion = () => {
     });
 };
 
-// PINTAR Y CONQUISTAR TERRITORIO
+// DIBUJO EN BLOQUE CUADRADO CON CANVAS
 const BLOCK_SIZE = 0.005;
 
 map.on('click', (e) => {
@@ -83,25 +97,23 @@ map.on('click', (e) => {
 
     for (let dx = -RADIUS; dx <= RADIUS; dx++) {
         for (let dy = -RADIUS; dy <= RADIUS; dy++) {
-            if (Math.sqrt(dx * dx + dy * dy) <= RADIUS) {
-                const bLat = (centerLat + (dx * BLOCK_SIZE)).toFixed(4);
-                const bLng = (centerLng + (dy * BLOCK_SIZE)).toFixed(4);
-                
-                const blockId = `${bLat}_${bLng}`.replace(/\./g, '_').replace(/-/g, 'm');
+            const bLat = (centerLat + (dx * BLOCK_SIZE)).toFixed(4);
+            const bLng = (centerLng + (dy * BLOCK_SIZE)).toFixed(4);
+            
+            const blockId = `${bLat}_${bLng}`.replace(/\./g, '_').replace(/-/g, 'm');
 
-                set(ref(db, `mapa/${blockId}`), {
-                    lat: parseFloat(bLat),
-                    lng: parseFloat(bLng),
-                    country: miPais,
-                    color: miColor,
-                    owner: miUsuario
-                });
-            }
+            set(ref(db, `mapa/${blockId}`), {
+                lat: parseFloat(bLat),
+                lng: parseFloat(bLng),
+                country: miPais,
+                color: miColor,
+                owner: miUsuario
+            });
         }
     }
 });
 
-// ESCUCHAR CAMBIOS EN EL MAPA
+// RENDERING ULTRA FLUIDO
 function procesarBloque(snap) {
     const b = snap.val();
     const idKey = snap.key;
@@ -116,7 +128,12 @@ function procesarBloque(snap) {
         mapaBloquesRenderizados[idKey].owner = b.owner;
         mapaBloquesRenderizados[idKey].rect.setTooltipContent(`<b>${b.country}</b>`);
     } else {
-        const rect = L.rectangle(bounds, { color: b.color, weight: 0.5, fillOpacity: 0.65 }).addTo(map);
+        const rect = L.rectangle(bounds, { 
+            color: b.color, 
+            weight: 0.5, 
+            fillOpacity: 0.65,
+            renderer: canvasRenderer
+        }).addTo(map);
         rect.bindTooltip(`<b>${b.country}</b>`, { sticky: true });
         mapaBloquesRenderizados[idKey] = { rect, owner: b.owner };
     }
@@ -125,10 +142,24 @@ function procesarBloque(snap) {
 onChildAdded(ref(db, 'mapa'), procesarBloque);
 onChildChanged(ref(db, 'mapa'), procesarBloque);
 
-// FUNCIONES DE INTERFAZ EXPORTADAS A WINDOW
+window.toggleTema = () => {
+    const html = document.documentElement;
+    const icon = document.getElementById("theme-icon");
+    
+    if (html.classList.contains("dark")) {
+        html.classList.remove("dark");
+        icon.innerText = "🌙";
+    } else {
+        html.classList.add("dark");
+        icon.innerText = "☀️";
+    }
+};
+
 window.setColor = (c) => miColor = c;
 window.guardarPais = () => {
-    miPais = document.getElementById("input-nombre-pais").value || "Nación Libre";
+    const valor = document.getElementById("input-nombre-pais").value.trim();
+    miPais = valor || "Nación Libre";
+    localStorage.setItem("countryplace_mipais", miPais);
     window.toggleModal('modal-pais');
 };
 window.toggleModal = (id) => document.getElementById(id).classList.toggle("hidden");
