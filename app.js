@@ -16,8 +16,10 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-// REGISTRO POR DEFECTO PARA NUEVOS USUARIOS
+// ESTADO GLOBAL
 let esModoRegistro = true;
+let modoPincel = false;
+let presionando = false;
 let miUsuario = null;
 let miColor = "#3b82f6";
 let miPais = localStorage.getItem("countryplace_mipais") || "Nación Libre";
@@ -28,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (inputPais) inputPais.value = miPais;
 });
 
-// MAPA OPTIMIZADO PARA MÓVILES (RENDERIZADO POR CANVAS)
+// MAPA LEAFLET CON CANVAS
 const canvasRenderer = L.canvas({ padding: 0.5 });
 const map = L.map('map', { 
     zoomControl: false, 
@@ -43,7 +45,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     updateWhenZooming: false
 }).addTo(map);
 
-// OBSERVADOR DE SESIÓN SILENCIOSO
+// OBSERVADOR DE SESIÓN
 onAuthStateChanged(auth, (user) => {
     if (user) {
         miUsuario = user.email;
@@ -85,14 +87,34 @@ window.cerrarSesion = () => {
     });
 };
 
-// DIBUJO EN BLOQUE CUADRADO CON CANVAS
+// MODO PINCEL (DIBUJO FLUIDO O NAVEGACIÓN)
+window.toggleModoPincel = () => {
+    modoPincel = !modoPincel;
+    const btn = document.getElementById("btn-pincel");
+
+    if (modoPincel) {
+        map.dragging.disable();
+        map.touchZoom.disable();
+        map.doubleClickZoom.disable();
+        map.scrollWheelZoom.disable();
+        btn.classList.add("pincel-activo");
+    } else {
+        map.dragging.enable();
+        map.touchZoom.enable();
+        map.doubleClickZoom.enable();
+        map.scrollWheelZoom.enable();
+        btn.classList.remove("pincel-activo");
+    }
+};
+
+// DIBUJAR EN BLOQUES CUADRADOS
 const BLOCK_SIZE = 0.005;
 
-map.on('click', (e) => {
+function pintarEnCoordenada(latlng) {
     if (!miUsuario) return;
 
-    const centerLat = Math.floor(e.latlng.lat / BLOCK_SIZE) * BLOCK_SIZE;
-    const centerLng = Math.floor(e.latlng.lng / BLOCK_SIZE) * BLOCK_SIZE;
+    const centerLat = Math.floor(latlng.lat / BLOCK_SIZE) * BLOCK_SIZE;
+    const centerLng = Math.floor(latlng.lng / BLOCK_SIZE) * BLOCK_SIZE;
     const RADIUS = 4;
 
     for (let dx = -RADIUS; dx <= RADIUS; dx++) {
@@ -111,9 +133,25 @@ map.on('click', (e) => {
             });
         }
     }
+}
+
+// EVENTOS DE DIBUJO AL ARRASTRAR O TOCAR
+map.on('mousedown touchstart', (e) => {
+    if (!modoPincel) return;
+    presionando = true;
+    pintarEnCoordenada(e.latlng);
 });
 
-// RENDERING ULTRA FLUIDO
+map.on('mousemove touchmove', (e) => {
+    if (!modoPincel || !presionando) return;
+    pintarEnCoordenada(e.latlng);
+});
+
+map.on('mouseup touchend', () => {
+    presionando = false;
+});
+
+// ESCUCHAR MAPA EN TIEMPO REAL
 function procesarBloque(snap) {
     const b = snap.val();
     const idKey = snap.key;
@@ -142,6 +180,7 @@ function procesarBloque(snap) {
 onChildAdded(ref(db, 'mapa'), procesarBloque);
 onChildChanged(ref(db, 'mapa'), procesarBloque);
 
+// TEMA Y UTILIDADES
 window.toggleTema = () => {
     const html = document.documentElement;
     const icon = document.getElementById("theme-icon");
