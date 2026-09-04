@@ -14,7 +14,7 @@ const db = getDatabase(app);
 let miColor = "#3b82f6";
 let miPais = "Nación Libre";
 let miUsuario = null;
-const mapaBloquesRenderizados = {}; // Guarda referencia gráfica para no duplicar en pantalla
+const mapaBloquesRenderizados = {};
 
 // MAPA LEAFLET
 const map = L.map('map', { zoomControl: false, tap: true }).setView([19.4326, -99.1332], 6);
@@ -32,13 +32,31 @@ onAuthStateChanged(auth, (user) => {
 });
 
 window.register = () => {
-    const e = document.getElementById("auth-email").value, p = document.getElementById("auth-pass").value;
-    createUserWithEmailAndPassword(auth, e, p).catch(err => alert(err.message));
+    const e = document.getElementById("auth-email") ? document.getElementById("auth-email").value.trim() : "";
+    const p = document.getElementById("auth-pass") ? document.getElementById("auth-pass").value.trim() : "";
+
+    if (!e || !p) return alert("⚠️ Llena ambos campos para registrarte.");
+    if (p.length < 6) return alert("⚠️ La contraseña debe tener al menos 6 caracteres.");
+
+    createUserWithEmailAndPassword(auth, e, p)
+        .then(() => alert("¡Cuenta creada con éxito! Bienvenido."))
+        .catch(err => {
+            if (err.code === "auth/email-already-in-use") {
+                alert("⚠️ Este correo ya existe. Usa 'Entrar'.");
+            } else {
+                alert("Error: " + err.message);
+            }
+        });
 };
 
 window.login = () => {
-    const e = document.getElementById("auth-email").value, p = document.getElementById("auth-pass").value;
-    signInWithEmailAndPassword(auth, e, p).catch(err => alert(err.message));
+    const e = document.getElementById("auth-email").value.trim();
+    const p = document.getElementById("auth-pass").value.trim();
+
+    if (!e || !p) return alert("⚠️ Llena ambos campos para entrar.");
+
+    signInWithEmailAndPassword(auth, e, p)
+        .catch(err => alert("Error al entrar: " + err.message));
 };
 
 window.cerrarSesion = () => {
@@ -47,7 +65,7 @@ window.cerrarSesion = () => {
     });
 };
 
-// PINTAR / CONQUISTAR (CLAVE ÚNICA PARA NO ROMPER LA BASE DE DATOS)
+// PINTAR / CONQUISTAR
 const BLOCK_SIZE = 0.005;
 
 map.on('click', (e) => {
@@ -63,10 +81,8 @@ map.on('click', (e) => {
                 const bLat = (centerLat + (dx * BLOCK_SIZE)).toFixed(4);
                 const bLng = (centerLng + (dy * BLOCK_SIZE)).toFixed(4);
                 
-                // Generar ID único basado en coordenadas (ej: "19_4325_-99_1330")
                 const blockId = `${bLat}_${bLng}`.replace(/\./g, '_').replace(/-/g, 'm');
 
-                // Sobreescribir nodo existente directo en Firebase
                 set(ref(db, `mapa/${blockId}`), {
                     lat: parseFloat(bLat),
                     lng: parseFloat(bLng),
@@ -79,24 +95,21 @@ map.on('click', (e) => {
     }
 });
 
-// ESCUCHAR BLOQUES NUEVOS O MODIFICADOS
+// ESCUCHAR BLOQUES EN TIEMPO REAL
 function procesarBloque(snap) {
     const b = snap.val();
     const idKey = snap.key;
     const bounds = [[b.lat, b.lng], [b.lat + BLOCK_SIZE, b.lng + BLOCK_SIZE]];
 
-    // Detección de guerra/invasión
     if (mapaBloquesRenderizados[idKey]) {
         const previo = mapaBloquesRenderizados[idKey].owner;
         if (previo === miUsuario?.uid && b.owner !== miUsuario?.uid) {
             dispararGuerra(b.country);
         }
-        // Actualizar capa visual existente
         mapaBloquesRenderizados[idKey].rect.setStyle({ color: b.color, fillColor: b.color });
         mapaBloquesRenderizados[idKey].owner = b.owner;
         mapaBloquesRenderizados[idKey].rect.setTooltipContent(`<b>${b.country}</b>`);
     } else {
-        // Crear nuevo rectángulo
         const rect = L.rectangle(bounds, { color: b.color, weight: 0.5, fillOpacity: 0.65 }).addTo(map);
         rect.bindTooltip(`<b>${b.country}</b>`, { sticky: true });
         mapaBloquesRenderizados[idKey] = { rect, owner: b.owner };
@@ -106,7 +119,7 @@ function procesarBloque(snap) {
 onChildAdded(ref(db, 'mapa'), procesarBloque);
 onChildChanged(ref(db, 'mapa'), procesarBloque);
 
-// MÉTODOS DE UI
+// METODOS DE UI
 window.setColor = (c) => miColor = c;
 window.guardarPais = () => {
     miPais = document.getElementById("input-nombre-pais").value || "Nación Libre";
