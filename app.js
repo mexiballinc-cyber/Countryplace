@@ -11,61 +11,81 @@ const auth = getAuth(app);
 const db = getDatabase(app);
 
 // ESTADO GLOBAL
+let esModoRegistro = false;
+let miUsuario = null;
 let miColor = "#3b82f6";
 let miPais = "Nación Libre";
-let miUsuario = null;
 const mapaBloquesRenderizados = {};
 
 // MAPA LEAFLET
 const map = L.map('map', { zoomControl: false, tap: true }).setView([19.4326, -99.1332], 6);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
 
-// AUTH OBSERVER
+// OBSERVADOR DE SESIÓN OFICIAL DE FIREBASE AUTH
 onAuthStateChanged(auth, (user) => {
     if (user) {
         miUsuario = user;
         document.getElementById("modal-auth").classList.add("hidden");
         document.getElementById("perfil-email").innerText = user.email;
     } else {
+        miUsuario = null;
         document.getElementById("modal-auth").classList.remove("hidden");
     }
 });
 
-window.register = () => {
-    const e = document.getElementById("auth-email") ? document.getElementById("auth-email").value.trim() : "";
-    const p = document.getElementById("auth-pass") ? document.getElementById("auth-pass").value.trim() : "";
+// CAMBIAR ENTRE INICIAR SESIÓN Y CREAR CUENTA
+window.toggleModoAuth = () => {
+    esModoRegistro = !esModoRegistro;
+    const title = document.getElementById("auth-title");
+    const btn = document.getElementById("btn-submit");
+    const switchText = document.getElementById("auth-switch-text");
+    const switchBtn = document.getElementById("auth-switch-btn");
 
-    if (!e || !p) return alert("⚠️ Llena ambos campos para registrarte.");
-    if (p.length < 6) return alert("⚠️ La contraseña debe tener al menos 6 caracteres.");
-
-    createUserWithEmailAndPassword(auth, e, p)
-        .then(() => alert("¡Cuenta creada con éxito! Bienvenido."))
-        .catch(err => {
-            if (err.code === "auth/email-already-in-use") {
-                alert("⚠️ Este correo ya existe. Usa 'Entrar'.");
-            } else {
-                alert("Error: " + err.message);
-            }
-        });
+    if (esModoRegistro) {
+        title.innerText = "Crear Cuenta";
+        btn.innerText = "Registrarse";
+        switchText.innerText = "¿Ya tienes cuenta?";
+        switchBtn.innerText = "Inicia Sesión";
+    } else {
+        title.innerText = "Iniciar Sesión";
+        btn.innerText = "Entrar";
+        switchText.innerText = "¿No tienes cuenta?";
+        switchBtn.innerText = "Crea una aquí";
+    }
 };
 
-window.login = () => {
+// EJECUTAR AUTENTICACIÓN (LOGIN O REGISTRO)
+window.ejecutarAuth = () => {
     const e = document.getElementById("auth-email").value.trim();
     const p = document.getElementById("auth-pass").value.trim();
 
-    if (!e || !p) return alert("⚠️ Llena ambos campos para entrar.");
+    if (!e || !p) return alert("⚠️ Rellena todos los campos.");
 
-    signInWithEmailAndPassword(auth, e, p)
-        .catch(err => alert("Error al entrar: " + err.message));
+    if (esModoRegistro) {
+        if (p.length < 6) return alert("⚠️ La contraseña debe tener al menos 6 caracteres.");
+
+        createUserWithEmailAndPassword(auth, e, p)
+            .then(() => alert("¡Cuenta creada exitosamente! Bienvenido."))
+            .catch(err => {
+                if (err.code === "auth/email-already-in-use") {
+                    alert("⚠️ Este correo ya existe. Cambia a 'Iniciar Sesión'.");
+                } else {
+                    alert("Error al registrar: " + err.message);
+                }
+            });
+    } else {
+        signInWithEmailAndPassword(auth, e, p)
+            .catch(err => alert("Error al entrar: " + err.message));
+    }
 };
 
 window.cerrarSesion = () => {
     signOut(auth).then(() => {
-        toggleModal('modal-perfil');
+        window.toggleModal('modal-perfil');
     });
 };
 
-// PINTAR / CONQUISTAR
+// PINTAR / CONQUISTAR (CLAVE ÚNICA PARA OPTIMIZAR LA BASE DE DATOS)
 const BLOCK_SIZE = 0.005;
 
 map.on('click', (e) => {
@@ -119,11 +139,11 @@ function procesarBloque(snap) {
 onChildAdded(ref(db, 'mapa'), procesarBloque);
 onChildChanged(ref(db, 'mapa'), procesarBloque);
 
-// METODOS DE UI
+// MÉTODOS DE INTERFAZ EXPORTADOS AL SCOPE GLOBAL (WINDOW)
 window.setColor = (c) => miColor = c;
 window.guardarPais = () => {
     miPais = document.getElementById("input-nombre-pais").value || "Nación Libre";
-    toggleModal('modal-pais');
+    window.toggleModal('modal-pais');
 };
 window.toggleModal = (id) => document.getElementById(id).classList.toggle("hidden");
 
