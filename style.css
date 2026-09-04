@@ -29,7 +29,6 @@ body, html {
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
 }
 
-/* ALERTA DE GUERRA FLOTANTE */
 @keyframes alertPulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.05); }
