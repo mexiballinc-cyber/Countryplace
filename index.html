@@ -19,11 +19,9 @@
         </h1>
 
         <div class="flex items-center gap-2">
-            <!-- BOTÓN MI PAÍS / BANDERA -->
             <button onclick="toggleModal('modal-pais')" class="glass-panel p-2 rounded-xl flex items-center justify-center hover:bg-slate-800 active:scale-95 transition-transform" title="Mi País">
                 <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6h-5.6z"/></svg>
             </button>
-            <!-- BOTÓN PERFIL -->
             <button onclick="toggleModal('modal-perfil')" class="glass-panel p-2 rounded-xl flex items-center justify-center hover:bg-slate-800 active:scale-95 transition-transform" title="Perfil">
                 <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
             </button>
@@ -73,21 +71,27 @@
         </div>
     </div>
 
-    <!-- MODAL BLOQUEO AUTH (CON FONDO PLANETA TIERRA) -->
-    <div id="modal-auth" class="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-cover bg-center" style="background-image: linear-gradient(to bottom, rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.95)), url('https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?q=80&w=1000&auto=format&fit=crop');">
+    <!-- MODAL AUTH CON PLANETA TIERRA AZUL -->
+    <div id="modal-auth" class="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-cover bg-center" style="background-image: linear-gradient(to bottom, rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.95)), url('https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1000&auto=format&fit=crop');">
         <div class="glass-panel w-full max-w-sm p-6 rounded-2xl space-y-4 text-center border border-white/20 shadow-2xl">
             <div class="text-4xl animate-bounce">🌍</div>
-            <h2 class="font-black text-amber-400 text-2xl tracking-wide">CountryPlace</h2>
+            <h2 id="auth-title" class="font-black text-amber-400 text-2xl tracking-wide">Iniciar Sesión</h2>
             <p class="text-xs text-slate-300">Conquista el mundo píxel a píxel en tiempo real.</p>
 
             <div class="space-y-2 text-left">
-                <input type="email" id="auth-email" placeholder="Correo electrónico" class="w-full p-3 bg-slate-900/90 rounded-xl text-xs outline-none border border-slate-700 focus:border-amber-400">
-                <input type="password" id="auth-pass" placeholder="Contraseña (mínimo 6 caracteres)" class="w-full p-3 bg-slate-900/90 rounded-xl text-xs outline-none border border-slate-700 focus:border-amber-400">
+                <input type="email" id="auth-email" placeholder="Correo electrónico" class="w-full p-3 bg-slate-900/90 rounded-xl text-xs outline-none border border-slate-700 focus:border-amber-400 text-white">
+                <input type="password" id="auth-pass" placeholder="Contraseña" class="w-full p-3 bg-slate-900/90 rounded-xl text-xs outline-none border border-slate-700 focus:border-amber-400 text-white">
             </div>
 
-            <div class="flex gap-2 pt-2">
-                <button onclick="login()" class="w-1/2 bg-amber-500 hover:bg-amber-600 font-black text-black py-2.5 rounded-xl text-xs active:scale-95 transition-transform">Entrar</button>
-                <button onclick="register()" class="w-1/2 bg-slate-800 hover:bg-slate-700 font-bold text-white py-2.5 rounded-xl text-xs active:scale-95 transition-transform border border-white/10">Registrar</button>
+            <button id="btn-submit" onclick="ejecutarAuth()" class="w-full bg-amber-500 hover:bg-amber-600 font-black text-black py-3 rounded-xl text-xs active:scale-95 transition-transform shadow-lg">
+                Entrar
+            </button>
+
+            <div class="pt-2 border-t border-white/10 text-xs">
+                <span id="auth-switch-text" class="text-slate-400">¿No tienes cuenta?</span>
+                <button onclick="toggleModoAuth()" id="auth-switch-btn" class="text-amber-400 font-bold underline ml-1">
+                    Crea una aquí
+                </button>
             </div>
         </div>
     </div>
