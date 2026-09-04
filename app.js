@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getDatabase, ref, set, onChildAdded, onChildChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, set, remove, onChildAdded, onChildChanged, onChildRemoved } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDsX0ZDsHnNcQ01ubUm5RDh5uQ3A5u9fO4",
@@ -19,9 +19,13 @@ const db = getDatabase(app);
 // ESTADO GLOBAL
 let esModoRegistro = true;
 let modoPincel = false;
+let modoBorrador = false;
 let presionando = false;
+let navegandoConScroll = false;
+let ultimoClickBoton = 0;
+let grosorPincel = 4;
 let miUsuario = null;
-let miColor = "#3b82f6";
+let miColor = "#ef4444";
 let miPais = localStorage.getItem("countryplace_mipais") || "Nación Libre";
 const mapaBloquesRenderizados = {};
 
@@ -30,12 +34,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (inputPais) inputPais.value = miPais;
 });
 
-// MAPA LEAFLET CON CANVAS
-const canvasRenderer = L.canvas({ padding: 0.5 });
+// OPTIMIZACIÓN DE MAPA RÁPIDO
+const canvasRenderer = L.canvas({ padding: 0.1 });
 const map = L.map('map', { 
     zoomControl: false, 
     tap: true,
     preferCanvas: true,
+    fadeAnimation: false,
+    zoomAnimation: false,
+    markerZoomAnimation: false,
     bounceAtZoomLimits: false
 }).setView([19.4326, -99.1332], 6);
 
@@ -87,7 +94,34 @@ window.cerrarSesion = () => {
     });
 };
 
-// MODO PINCEL (DIBUJO FLUIDO O NAVEGACIÓN)
+// SELECCIONAR COLOR AL INSTANTE
+window.setColor = (c) => {
+    miColor = c;
+    if (modoBorrador) activarBorrador(); // Desactiva borrador al tocar cualquier color
+};
+
+// BORRADOR Y PINCEL
+window.activarBorrador = () => {
+    modoBorrador = !modoBorrador;
+    const btnBorrar = document.getElementById("btn-borrador");
+
+    if (modoBorrador) {
+        btnBorrar.classList.add("borrador-activo");
+    } else {
+        btnBorrar.classList.remove("borrador-activo");
+    }
+};
+
+window.clickBotonPincel = () => {
+    const ahora = Date.now();
+    if (ahora - ultimoClickBoton < 300) {
+        window.toggleModal('modal-grosor');
+    } else {
+        window.toggleModoPincel();
+    }
+    ultimoClickBoton = ahora;
+};
+
 window.toggleModoPincel = () => {
     modoPincel = !modoPincel;
     const btn = document.getElementById("btn-pincel");
@@ -107,15 +141,20 @@ window.toggleModoPincel = () => {
     }
 };
 
-// DIBUJAR EN BLOQUES CUADRADOS
+window.cambiarGrosor = (v) => {
+    grosorPincel = parseInt(v);
+    document.getElementById("val-grosor").innerText = `${grosorPincel}x${grosorPincel}`;
+};
+
+// DIBUJAR O BORRAR SOLO SUS BLOQUES
 const BLOCK_SIZE = 0.005;
 
-function pintarEnCoordenada(latlng) {
+function procesarAccionEnCoordenada(latlng) {
     if (!miUsuario) return;
 
     const centerLat = Math.floor(latlng.lat / BLOCK_SIZE) * BLOCK_SIZE;
     const centerLng = Math.floor(latlng.lng / BLOCK_SIZE) * BLOCK_SIZE;
-    const RADIUS = 4;
+    const RADIUS = grosorPincel;
 
     for (let dx = -RADIUS; dx <= RADIUS; dx++) {
         for (let dy = -RADIUS; dy <= RADIUS; dy++) {
@@ -124,27 +163,55 @@ function pintarEnCoordenada(latlng) {
             
             const blockId = `${bLat}_${bLng}`.replace(/\./g, '_').replace(/-/g, 'm');
 
-            set(ref(db, `mapa/${blockId}`), {
-                lat: parseFloat(bLat),
-                lng: parseFloat(bLng),
-                country: miPais,
-                color: miColor,
-                owner: miUsuario
-            });
+            if (modoBorrador) {
+                if (mapaBloquesRenderizados[blockId] && mapaBloquesRenderizados[blockId].owner === miUsuario) {
+                    remove(ref(db, `mapa/${blockId}`));
+                }
+            } else {
+                set(ref(db, `mapa/${blockId}`), {
+                    lat: parseFloat(bLat),
+                    lng: parseFloat(bLng),
+                    country: miPais,
+                    color: miColor,
+                    owner: miUsuario
+                });
+            }
         }
     }
 }
 
-// EVENTOS DE DIBUJO AL ARRASTRAR O TOCAR
+// NAVEGACIÓN CON SCROLL CLICK
+const mapElement = document.getElementById('map');
+
+mapElement.addEventListener('mousedown', (e) => {
+    if (e.button === 1) {
+        e.preventDefault();
+        navegandoConScroll = true;
+        map.dragging.enable();
+        mapElement.style.cursor = 'grabbing';
+    }
+});
+
+mapElement.addEventListener('mouseup', (e) => {
+    if (e.button === 1) {
+        navegandoConScroll = false;
+        mapElement.style.cursor = 'crosshair';
+        if (modoPincel) {
+            map.dragging.disable();
+        }
+    }
+});
+
+// EVENTOS DE DIBUJO AL ARRASTRAR
 map.on('mousedown touchstart', (e) => {
-    if (!modoPincel) return;
+    if (!modoPincel || navegandoConScroll) return;
     presionando = true;
-    pintarEnCoordenada(e.latlng);
+    procesarAccionEnCoordenada(e.latlng);
 });
 
 map.on('mousemove touchmove', (e) => {
-    if (!modoPincel || !presionando) return;
-    pintarEnCoordenada(e.latlng);
+    if (!modoPincel || !presionando || navegandoConScroll) return;
+    procesarAccionEnCoordenada(e.latlng);
 });
 
 map.on('mouseup touchend', () => {
@@ -154,6 +221,8 @@ map.on('mouseup touchend', () => {
 // ESCUCHAR MAPA EN TIEMPO REAL
 function procesarBloque(snap) {
     const b = snap.val();
+    if (!b) return;
+
     const idKey = snap.key;
     const bounds = [[b.lat, b.lng], [b.lat + BLOCK_SIZE, b.lng + BLOCK_SIZE]];
 
@@ -179,22 +248,28 @@ function procesarBloque(snap) {
 
 onChildAdded(ref(db, 'mapa'), procesarBloque);
 onChildChanged(ref(db, 'mapa'), procesarBloque);
+onChildRemoved(ref(db, 'mapa'), (snap) => {
+    const idKey = snap.key;
+    if (mapaBloquesRenderizados[idKey]) {
+        map.removeLayer(mapaBloquesRenderizados[idKey].rect);
+        delete mapaBloquesRenderizados[idKey];
+    }
+});
 
-// TEMA Y UTILIDADES
+// TEMA CLARO Y OSCURO DINÁMICO
 window.toggleTema = () => {
     const html = document.documentElement;
     const icon = document.getElementById("theme-icon");
     
     if (html.classList.contains("dark")) {
         html.classList.remove("dark");
-        icon.innerText = "🌙";
+        icon.innerHTML = `<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>`;
     } else {
         html.classList.add("dark");
-        icon.innerText = "☀️";
+        icon.innerHTML = `<path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41s-1.02-.39-1.41 0z"/>`;
     }
 };
 
-window.setColor = (c) => miColor = c;
 window.guardarPais = () => {
     const valor = document.getElementById("input-nombre-pais").value.trim();
     miPais = valor || "Nación Libre";
