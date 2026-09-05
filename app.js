@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getDatabase, ref, set, remove, onChildAdded, onChildChanged, onChildRemoved } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, set, update, remove, onChildAdded, onChildChanged, onChildRemoved } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDsX0ZDsHnNcQ01ubUm5RDh5uQ3A5u9fO4",
@@ -184,7 +184,7 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// PROCESO DE DIBUJO Y BORRADO DE BLOQUES
+// PROCESO DE DIBUJO Y BORRADO DE BLOQUES OPTIMIZADO (BATCH UDPATE)
 const BLOCK_SIZE = 0.005;
 
 function procesarAccionEnCoordenada(latlng) {
@@ -194,25 +194,30 @@ function procesarAccionEnCoordenada(latlng) {
     const centerLng = Math.floor(latlng.lng / BLOCK_SIZE) * BLOCK_SIZE;
     const RADIUS = grosorPincel - 1;
 
+    const actualizaciones = {};
+
     for (let dx = -RADIUS; dx <= RADIUS; dx++) {
         for (let dy = -RADIUS; dy <= RADIUS; dy++) {
             const bLat = (centerLat + (dx * BLOCK_SIZE)).toFixed(4);
             const bLng = (centerLng + (dy * BLOCK_SIZE)).toFixed(4);
-            
             const blockId = `${bLat}_${bLng}`.replace(/\./g, '_').replace(/-/g, 'm');
 
             if (modoBorrador) {
                 remove(ref(db, `mapa/${blockId}`));
             } else {
-                set(ref(db, `mapa/${blockId}`), {
+                actualizaciones[`mapa/${blockId}`] = {
                     lat: parseFloat(bLat),
                     lng: parseFloat(bLng),
                     country: miPais,
                     color: miColor,
                     owner: miUsuario
-                });
+                };
             }
         }
+    }
+
+    if (!modoBorrador && Object.keys(actualizaciones).length > 0) {
+        update(ref(db), actualizaciones);
     }
 }
 
